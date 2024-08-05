@@ -1,13 +1,17 @@
 package controlebomberman;
 
-
-import rmi.Movimento;
+import jakarta.xml.ws.Service;
+//import rmi.Movimento;
 import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -21,7 +25,8 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import javax.swing.UIManager;
-import rmi.MovimentoListener;
+import javax.xml.namespace.QName;
+import soap.MovimentoListener;
 
 public class Controle extends JFrame implements KeyListener, MovimentoListener{
 
@@ -35,7 +40,7 @@ public class Controle extends JFrame implements KeyListener, MovimentoListener{
     
     int l = 3, c = 7, id = 0;
 
-    Movimento stub;
+    soap.Movimento stub;
     JLabel[] rotulos = new JLabel[l*c];
 
     String nome = "nome_padrao";
@@ -106,15 +111,20 @@ public class Controle extends JFrame implements KeyListener, MovimentoListener{
         addKeyListener(this);
     }
     
-    public Controle() throws RemoteException, NotBoundException {
+    public Controle() throws RemoteException, NotBoundException, URISyntaxException, MalformedURLException {
 
         iniciaGUI();
         
-        String e = "10.25.2.30";
-        int p = 2000;
+        String e = "localhost";
+
+        URL url = new URI("http://127.0.0.1:9876/bomberman?wsdl").toURL();
+        QName qname = new QName("http://controller/","ControllerSOAPService");
+        Service s = Service.create(url, qname);
+        stub = s.getPort(soap.Movimento.class);
+        /*int p = 2000;
         Registry r = LocateRegistry.getRegistry(e, p);
         stub = (Movimento) r.lookup("controller_rmi");
-        
+        */
         nome = JOptionPane.showInputDialog("Informe seu nome - 7 chars");
         nome  = (nome == null || nome.isEmpty()) ? "Nick" : nome;
         id = stub.adicionarJogador(nome);
@@ -123,7 +133,7 @@ public class Controle extends JFrame implements KeyListener, MovimentoListener{
     
     
     public void keyPressed(KeyEvent ke) {
-        try{
+//        try{
             stub.moverPeca(ke.getKeyCode(), id);
             System.out.println("Movimento...");
 
@@ -173,9 +183,9 @@ public class Controle extends JFrame implements KeyListener, MovimentoListener{
             
             sw.execute();
 
-        }catch(RemoteException re){
-            re.printStackTrace();
-        }
+//        }catch(RemoteException re){
+//            re.printStackTrace();
+//        }
     }
 
     public void keyTyped(KeyEvent ke) {}
@@ -186,7 +196,7 @@ public class Controle extends JFrame implements KeyListener, MovimentoListener{
         System.out.println("Um Movimento: "+movimento);
     }
       
-    public static void main(String[] args) throws RemoteException, NotBoundException {
+    public static void main(String[] args) throws RemoteException, NotBoundException, URISyntaxException, MalformedURLException {
         new Controle();
     }
 }
